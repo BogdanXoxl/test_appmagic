@@ -1,5 +1,5 @@
 import moment from "moment";
-import { ModDataType } from ".";
+import type { ModDataType } from ".";
 
 export type RangeFilterType = "day" | "month" | "year" | "all";
 
