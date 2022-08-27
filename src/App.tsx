@@ -1,55 +1,34 @@
 import React, { useMemo } from "react";
 import { Line } from "@ant-design/plots";
 import { Col, Row, Form, Select } from "antd";
-
-import { DateFormat, getData } from "./utils/getData";
-import mocs from "./data/mocs.json";
-
 const { Option } = Select;
 
-type FormType = {};
+import { getData, filterData } from "./utils";
+import type { DateFormat, RangeFilterType } from "./utils";
 
-type DiscretenessOptionsType = {
-  value: DateFormat;
-  label: string;
+import { createChartConfig, discretenessOptions, rangeOptions } from "./helpers/chartOptions";
+
+import mocs from "./data/mocs.json";
+
+type FormType = {
+  range: RangeFilterType;
+  discreteness: DateFormat;
 }[];
 
-const createChartConfig = (data: any) => ({
-  data,
-  xField: "date",
-  yField: "price",
-  xAxis: {
-    tickCount: 5,
-  },
-  smooth: true,
-  scrollbar: {},
-  slider: {
-    start: 0.1,
-    end: 0.5,
-    trendCfg: {
-      lineStyle: {},
-    },
-  },
-});
-
-const rangeOptions = [
-  { label: "Last 90 days", value: "season" },
-  { label: "Last 30 days", value: "month" },
-  { label: "Last day", value: "day" },
-  { label: "Last hour", value: "hour" },
-];
-
-const discretenessOptions: DiscretenessOptionsType = [
-  { label: "Hours", value: "YY-MM-DD hh:mm" },
-  { label: "Days", value: "YY-MM-DD" },
-  { label: "Weeks", value: "YY-MM wo [week]" },
-];
+const initialValues = {
+  range: rangeOptions[0].value,
+  discreteness: discretenessOptions[0].value,
+};
 
 function App() {
   const [form] = Form.useForm<FormType>();
   const discreteness = Form.useWatch("discreteness", form);
-  const data = useMemo(() => getData(mocs.ethereum.transactions, discreteness), [discreteness]);
-  const config = createChartConfig(data);
+  const range = Form.useWatch("range", form);
+
+  const modData = useMemo(() => getData(mocs.ethereum.transactions, discreteness), [discreteness]);
+  const filteredData = useMemo(() => filterData(modData, range), [modData, range]);
+
+  const config = createChartConfig(filteredData);
 
   return (
     <div className="App">
@@ -60,7 +39,7 @@ function App() {
             name="basic"
             layout="inline"
             autoComplete="off"
-            initialValues={{ discreteness: discretenessOptions[0].value }}
+            initialValues={initialValues}
           >
             <Form.Item name="range" label="Range">
               <Select style={{ minWidth: "130px" }}>
